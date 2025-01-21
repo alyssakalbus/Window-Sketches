@@ -1,8 +1,8 @@
 // Alyssa Kalbus 2025
-// Created using P5.js and Modified VIDA P5 Blob Tracking Library
+// Created using P5.js and VIDA P5 Blob Tracking Library
 
-const camXres = 1024;
-const camYres = 768;
+const xResolution = 1024;
+const yResolution = 768;
 
 var myCapture, // camera
     myVida;    // VIDA
@@ -24,7 +24,7 @@ function initCaptureDevice() {
 }
 
 function setup() {
-  createCanvas(camXres, camYres);
+  createCanvas(xResolution, yResolution);
   initCaptureDevice();
 
   // VIDA STUFF
@@ -50,24 +50,23 @@ function setup() {
   myVida.pointsPerApproximatedBlobPolygon = 1;
 
   frameRate(60);
-  noiseSeed(42);
 }
 
 function draw() {
   if (myCapture !== null && myCapture !== undefined) {
     background(255);
 
-    // buffer for VIDA processing (grayscale only)
+    // buffer for VIDA processing
     let vidaBuffer = createGraphics(myCapture.width, myCapture.height);
     vidaBuffer.image(myCapture, 0, 0);
 
-    // Create grayscale for VIDA
+    // Create grayscale
     vidaBuffer.loadPixels();
     for (let i = 0; i < vidaBuffer.pixels.length; i += 4) {
       let r = vidaBuffer.pixels[i];
       let g = vidaBuffer.pixels[i + 1];
       let b = vidaBuffer.pixels[i + 2];
-      let avg = (r + g + b) / 3; // Darken grayscale
+      let avg = (r + g + b) / 3;
       vidaBuffer.pixels[i] = avg;
       vidaBuffer.pixels[i + 1] = avg;
       vidaBuffer.pixels[i + 2] = avg;
@@ -77,11 +76,11 @@ function draw() {
     // Update VIDA with grayscale buffer
     myVida.update(vidaBuffer);
 
-    // Create separate buffer for dithered display
+    //  separate buffer for dithered display
     let displayBuffer = createGraphics(myCapture.width, myCapture.height);
     displayBuffer.image(myCapture, 0, 0);
 
-    // Apply dithering effect for display only
+    // Apply dithering effect for displayBuffer only
     displayBuffer.loadPixels();
     let d = pixelDensity();
     let pixelsPerRow = displayBuffer.width * d * 4;
@@ -94,44 +93,43 @@ function draw() {
         let g = displayBuffer.pixels[i + 1];
         let b = displayBuffer.pixels[i + 2];
 
-        // Convert current pixel to grayscale
+       
         let gray = (r + g + b) / 3;
-        let level = Math.floor(gray / 51) * 51; // Map to 5 dither levels
+        let level = Math.floor(gray / 51) * 51; // 5 levels for dithering
 
-        // Flag for detecting edge
         let isEdge = false;
 
-      // Check right neighbor for edge (subtle threshold for thinner edge)
+      // check edges
       if (x < displayBuffer.width * d - 1) {
-        let neighborIndex = i + 4; // Next pixel in row
-        let nr = displayBuffer.pixels[neighborIndex];
-        let ng = displayBuffer.pixels[neighborIndex + 1];
-        let nb = displayBuffer.pixels[neighborIndex + 2];
-        let neighborGray = (nr + ng + nb) / 3;
-        let neighborLevel = Math.floor(neighborGray / 51) * 51;
+        let edgeIndex = i + 4; // Next pixel in row
+        let nr = displayBuffer.pixels[edgeIndex];
+        let ng = displayBuffer.pixels[edgeIndex + 1];
+        let nb = displayBuffer.pixels[edgeIndex + 2];
+        let edgeGray = (nr + ng + nb) / 3;
+        let edgeLevel = Math.floor(edgeGray / 51) * 51;
 
         // Smaller difference for thinner edge detection
-        if (Math.abs(level - neighborLevel) < 50) {
+        if (Math.abs(level - edgeLevel) < 50) {
           isEdge = true;
         }
       }
 
-      // Check bottom neighbor for edge (subtle threshold for thinner edge)
+      // Check bottom edge for edge (subtle threshold for thinner edge)
       if (y < displayBuffer.height * d - 1) {
-        let neighborIndex = i + pixelsPerRow; // Next pixel in column
-        let nr = displayBuffer.pixels[neighborIndex];
-        let ng = displayBuffer.pixels[neighborIndex + 1];
-        let nb = displayBuffer.pixels[neighborIndex + 2];
-        let neighborGray = (nr + ng + nb) / 3;
-        let neighborLevel = Math.floor(neighborGray / 51) * 51;
+        let edgeIndex = i + pixelsPerRow; // Next pixel in column
+        let nr = displayBuffer.pixels[edgeIndex];
+        let ng = displayBuffer.pixels[edgeIndex + 1];
+        let nb = displayBuffer.pixels[edgeIndex + 2];
+        let edgeGray = (nr + ng + nb) / 3;
+        let edgeLevel = Math.floor(edgeGray / 51) * 51;
 
-        // Smaller difference for thinner edge detection
-        if (Math.abs(level - neighborLevel) < 50) {
+        // Thinner edges
+        if (Math.abs(level - edgeLevel) < 50) {
           isEdge = true;
         }
       }
 
-        // Set outline color if edge is detected, otherwise set to black
+        // Edge color
         if (isEdge) {
           displayBuffer.pixels[i] = 255;
           displayBuffer.pixels[i + 1] = 255;
@@ -171,7 +169,7 @@ function draw() {
         fill(255, 255, 255);
         rect(boxX, boxY, boxW, boxH);
 
-        // display image using dithered buffer
+        // display image w/ dithered buffer
         copy(
           displayBuffer,
           (1 - blob.normRectX - blob.normRectW) * displayBuffer.width,
